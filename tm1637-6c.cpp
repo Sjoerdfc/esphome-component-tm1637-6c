@@ -1,4 +1,4 @@
-#include "tm1637_6c.h"
+#include "tm1637-6c.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/hal.h"
@@ -343,17 +343,17 @@ uint8_t TM1637_6C_Display::print(uint8_t start_pos, const char *str) {
         break;
       }
       //order for the 6 character display:  2 1 0 5 4 3
-      if (pos = 0) {
+      if (pos == 0) {
         this->buffer_[2] = data;
-      } else if (pos = 1) {
+      } else if (pos == 1) {
         this->buffer_[1] = data;
-      } else if (pos = 2) {
+      } else if (pos == 2) {
         this->buffer_[0] = data;
-      } else if (pos = 3) {
+      } else if (pos == 3) {
         this->buffer_[5] = data;
-      } else if (pos = 4) {
+      } else if (pos == 4) {
         this->buffer_[4] = data;
-      } else if (pos = 5) {
+      } else if (pos == 5) {
         this->buffer_[3] = data;
       }
     }
