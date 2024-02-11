@@ -14,13 +14,13 @@ from esphome.const import (
 
 CODEOWNERS = ["@glmnet"]
 
-tm1637_ns = cg.esphome_ns.namespace("tm1637")
-TM1637Display = tm1637_ns.class_("TM1637Display", cg.PollingComponent)
-TM1637DisplayRef = TM1637Display.operator("ref")
+tm1637_6c_ns = cg.esphome_ns.namespace("tm1637_6c")
+TM1637_6C_Display = tm1637_6c_ns.class_("TM1637_6C_Display", cg.PollingComponent)
+TM1637_6C_DisplayRef = TM1637_6C_Display.operator("ref")
 
 CONFIG_SCHEMA = display.BASIC_DISPLAY_SCHEMA.extend(
     {
-        cv.GenerateID(): cv.declare_id(TM1637Display),
+        cv.GenerateID(): cv.declare_id(TM1637_6C_Display),
         cv.Optional(CONF_INTENSITY, default=7): cv.All(
             cv.uint8_t, cv.Range(min=0, max=7)
         ),
@@ -47,6 +47,6 @@ async def to_code(config):
 
     if CONF_LAMBDA in config:
         lambda_ = await cg.process_lambda(
-            config[CONF_LAMBDA], [(TM1637DisplayRef, "it")], return_type=cg.void
+            config[CONF_LAMBDA], [(TM1637_6C_DisplayRef, "it")], return_type=cg.void
         )
         cg.add(var.set_writer(lambda_))

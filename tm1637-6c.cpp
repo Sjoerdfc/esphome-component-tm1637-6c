@@ -1,22 +1,22 @@
-#include "tm1637.h"
+#include "tm1637_6c.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/hal.h"
 
 namespace esphome {
-namespace tm1637 {
+namespace tm1637_6c {
 
-static const char *const TAG = "display.tm1637";
-const uint8_t TM1637_CMD_DATA = 0x40;  //!< Display data command
-const uint8_t TM1637_CMD_CTRL = 0x80;  //!< Display control command
-const uint8_t TM1637_CMD_ADDR = 0xc0;  //!< Display address command
-const uint8_t TM1637_UNKNOWN_CHAR = 0b11111111;
+static const char *const TAG = "display.tm1637_6c";
+const uint8_t TM1637_6C_CMD_DATA = 0x40;  //!< Display data command
+const uint8_t TM1637_6C_CMD_CTRL = 0x80;  //!< Display control command
+const uint8_t TM1637_6C_CMD_ADDR = 0xc0;  //!< Display address command
+const uint8_t TM1637_6C_UNKNOWN_CHAR = 0b11111111;
 
 // Data command bits
-const uint8_t TM1637_DATA_WRITE = 0x00;          //!< Write data
-const uint8_t TM1637_DATA_READ_KEYS = 0x02;      //!< Read keys
-const uint8_t TM1637_DATA_AUTO_INC_ADDR = 0x00;  //!< Auto increment address
-const uint8_t TM1637_DATA_FIXED_ADDR = 0x04;     //!< Fixed address
+const uint8_t TM1637_6C_DATA_WRITE = 0x00;          //!< Write data
+const uint8_t TM1637_6C_DATA_READ_KEYS = 0x02;      //!< Read keys
+const uint8_t TM1637_6C_DATA_AUTO_INC_ADDR = 0x00;  //!< Auto increment address
+const uint8_t TM1637_6C_DATA_FIXED_ADDR = 0x04;     //!< Fixed address
 
 //
 //      A
@@ -27,23 +27,23 @@ const uint8_t TM1637_DATA_FIXED_ADDR = 0x04;     //!< Fixed address
 //     ---
 //      D   X
 // XABCDEFG
-const uint8_t TM1637_ASCII_TO_RAW[] PROGMEM = {
+const uint8_t TM1637_6C_ASCII_TO_RAW[] PROGMEM = {
     0b00000000,           // ' ', ord 0x20
     0b10110000,           // '!', ord 0x21
     0b00100010,           // '"', ord 0x22
-    TM1637_UNKNOWN_CHAR,  // '#', ord 0x23
-    TM1637_UNKNOWN_CHAR,  // '$', ord 0x24
+    TM1637_6C_UNKNOWN_CHAR,  // '#', ord 0x23
+    TM1637_6C_UNKNOWN_CHAR,  // '$', ord 0x24
     0b01001001,           // '%', ord 0x25
-    TM1637_UNKNOWN_CHAR,  // '&', ord 0x26
+    TM1637_6C_UNKNOWN_CHAR,  // '&', ord 0x26
     0b00000010,           // ''', ord 0x27
     0b01001110,           // '(', ord 0x28
     0b01111000,           // ')', ord 0x29
     0b01000000,           // '*', ord 0x2A
-    TM1637_UNKNOWN_CHAR,  // '+', ord 0x2B
+    TM1637_6C_UNKNOWN_CHAR,  // '+', ord 0x2B
     0b00010000,           // ',', ord 0x2C
     0b00000001,           // '-', ord 0x2D
     0b10000000,           // '.', ord 0x2E
-    TM1637_UNKNOWN_CHAR,  // '/', ord 0x2F
+    TM1637_6C_UNKNOWN_CHAR,  // '/', ord 0x2F
     0b01111110,           // '0', ord 0x30
     0b00110000,           // '1', ord 0x31
     0b01101101,           // '2', ord 0x32
@@ -56,9 +56,9 @@ const uint8_t TM1637_ASCII_TO_RAW[] PROGMEM = {
     0b01111011,           // '9', ord 0x39
     0b01001000,           // ':', ord 0x3A
     0b01011000,           // ';', ord 0x3B
-    TM1637_UNKNOWN_CHAR,  // '<', ord 0x3C
-    TM1637_UNKNOWN_CHAR,  // '=', ord 0x3D
-    TM1637_UNKNOWN_CHAR,  // '>', ord 0x3E
+    TM1637_6C_UNKNOWN_CHAR,  // '<', ord 0x3C
+    TM1637_6C_UNKNOWN_CHAR,  // '=', ord 0x3D
+    TM1637_6C_UNKNOWN_CHAR,  // '>', ord 0x3E
     0b01100101,           // '?', ord 0x3F
     0b01101111,           // '@', ord 0x40
     0b01110111,           // 'A', ord 0x41
@@ -71,9 +71,9 @@ const uint8_t TM1637_ASCII_TO_RAW[] PROGMEM = {
     0b00110111,           // 'H', ord 0x48
     0b00110000,           // 'I', ord 0x49
     0b00111100,           // 'J', ord 0x4A
-    TM1637_UNKNOWN_CHAR,  // 'K', ord 0x4B
+    TM1637_6C_UNKNOWN_CHAR,  // 'K', ord 0x4B
     0b00001110,           // 'L', ord 0x4C
-    TM1637_UNKNOWN_CHAR,  // 'M', ord 0x4D
+    TM1637_6C_UNKNOWN_CHAR,  // 'M', ord 0x4D
     0b00010101,           // 'N', ord 0x4E
     0b01111110,           // 'O', ord 0x4F
     0b01100111,           // 'P', ord 0x50
@@ -84,13 +84,13 @@ const uint8_t TM1637_ASCII_TO_RAW[] PROGMEM = {
     0b00111110,           // 'U', ord 0x55
     0b00111110,           // 'V', ord 0x56
     0b00111111,           // 'W', ord 0x57
-    TM1637_UNKNOWN_CHAR,  // 'X', ord 0x58
+    TM1637_6C_UNKNOWN_CHAR,  // 'X', ord 0x58
     0b00100111,           // 'Y', ord 0x59
     0b01101101,           // 'Z', ord 0x5A
     0b01001110,           // '[', ord 0x5B
-    TM1637_UNKNOWN_CHAR,  // '\', ord 0x5C
+    TM1637_6C_UNKNOWN_CHAR,  // '\', ord 0x5C
     0b01111000,           // ']', ord 0x5D
-    TM1637_UNKNOWN_CHAR,  // '^', ord 0x5E
+    TM1637_6C_UNKNOWN_CHAR,  // '^', ord 0x5E
     0b00001000,           // '_', ord 0x5F
     0b00100000,           // '`', ord 0x60
     0b01110111,           // 'a', ord 0x61
@@ -103,28 +103,28 @@ const uint8_t TM1637_ASCII_TO_RAW[] PROGMEM = {
     0b00010111,           // 'h', ord 0x68
     0b00010000,           // 'i', ord 0x69
     0b00111100,           // 'j', ord 0x6A
-    TM1637_UNKNOWN_CHAR,  // 'k', ord 0x6B
+    TM1637_6C_UNKNOWN_CHAR,  // 'k', ord 0x6B
     0b00001110,           // 'l', ord 0x6C
-    TM1637_UNKNOWN_CHAR,  // 'm', ord 0x6D
+    TM1637_6C_UNKNOWN_CHAR,  // 'm', ord 0x6D
     0b00010101,           // 'n', ord 0x6E
     0b00011101,           // 'o', ord 0x6F
     0b01100111,           // 'p', ord 0x70
-    TM1637_UNKNOWN_CHAR,  // 'q', ord 0x71
+    TM1637_6C_UNKNOWN_CHAR,  // 'q', ord 0x71
     0b00000101,           // 'r', ord 0x72
     0b01011011,           // 's', ord 0x73
     0b00000111,           // 't', ord 0x74
     0b00011100,           // 'u', ord 0x75
     0b00011100,           // 'v', ord 0x76
-    TM1637_UNKNOWN_CHAR,  // 'w', ord 0x77
-    TM1637_UNKNOWN_CHAR,  // 'x', ord 0x78
+    TM1637_6C_UNKNOWN_CHAR,  // 'w', ord 0x77
+    TM1637_6C_UNKNOWN_CHAR,  // 'x', ord 0x78
     0b00100111,           // 'y', ord 0x79
-    TM1637_UNKNOWN_CHAR,  // 'z', ord 0x7A
+    TM1637_6C_UNKNOWN_CHAR,  // 'z', ord 0x7A
     0b00110001,           // '{', ord 0x7B
     0b00000110,           // '|', ord 0x7C
     0b00000111,           // '}', ord 0x7D
     0b01100011,           // '~', ord 0x7E (degree symbol)
 };
-void TM1637Display::setup() {
+void TM1637_6C_Display::setup() {
   ESP_LOGCONFIG(TAG, "Setting up TM1637...");
 
   this->clk_pin_->setup();               // OUTPUT
@@ -134,7 +134,7 @@ void TM1637Display::setup() {
 
   this->display();
 }
-void TM1637Display::dump_config() {
+void TM1637_6C_Display::dump_config() {
   ESP_LOGCONFIG(TAG, "TM1637:");
   ESP_LOGCONFIG(TAG, "  Intensity: %d", this->intensity_);
   ESP_LOGCONFIG(TAG, "  Inverted: %d", this->inverted_);
@@ -145,15 +145,15 @@ void TM1637Display::dump_config() {
 }
 
 #ifdef USE_BINARY_SENSOR
-void TM1637Display::loop() {
+void TM1637_6C_Display::loop() {
   uint8_t val = this->get_keys();
-  for (auto *tm1637_key : this->tm1637_keys_)
-    tm1637_key->process(val);
+  for (auto *tm1637_6c_key : this->tm1637_6c_keys_)
+    tm1637_6c_key->process(val);
 }
 
-uint8_t TM1637Display::get_keys() {
+uint8_t TM1637_6C_Display::get_keys() {
   this->start_();
-  this->send_byte_(TM1637_CMD_DATA | TM1637_DATA_READ_KEYS);
+  this->send_byte_(TM1637_6C_CMD_DATA | TM1637_6C_DATA_READ_KEYS);
   this->start_();
   uint8_t key_code = read_byte_();
   this->stop_();
@@ -174,7 +174,7 @@ uint8_t TM1637Display::get_keys() {
 }
 #endif
 
-void TM1637Display::update() {
+void TM1637_6C_Display::update() {
   for (uint8_t &i : this->buffer_)
     i = 0;
   if (this->writer_.has_value())
@@ -182,14 +182,14 @@ void TM1637Display::update() {
   this->display();
 }
 
-float TM1637Display::get_setup_priority() const { return setup_priority::PROCESSOR; }
-void TM1637Display::bit_delay_() { delayMicroseconds(100); }
-void TM1637Display::start_() {
+float TM1637_6C_Display::get_setup_priority() const { return setup_priority::PROCESSOR; }
+void TM1637_6C_Display::bit_delay_() { delayMicroseconds(100); }
+void TM1637_6C_Display::start_() {
   this->dio_pin_->pin_mode(gpio::FLAG_OUTPUT);
   this->bit_delay_();
 }
 
-void TM1637Display::stop_() {
+void TM1637_6C_Display::stop_() {
   this->dio_pin_->pin_mode(gpio::FLAG_OUTPUT);
   bit_delay_();
   this->clk_pin_->pin_mode(gpio::FLAG_INPUT);
@@ -198,17 +198,17 @@ void TM1637Display::stop_() {
   bit_delay_();
 }
 
-void TM1637Display::display() {
+void TM1637_6C_Display::display() {
   ESP_LOGVV(TAG, "Display %02X%02X%02X%02X", buffer_[0], buffer_[1], buffer_[2], buffer_[3]);
 
   // Write DATA CMND
   this->start_();
-  this->send_byte_(TM1637_CMD_DATA);
+  this->send_byte_(TM1637_6C_CMD_DATA);
   this->stop_();
 
   // Write ADDR CMD + first digit address
   this->start_();
-  this->send_byte_(TM1637_CMD_ADDR);
+  this->send_byte_(TM1637_6C_CMD_ADDR);
 
   // Write the data bytes
   if (this->inverted_) {
@@ -225,10 +225,10 @@ void TM1637Display::display() {
 
   // Write display CTRL CMND + brightness
   this->start_();
-  this->send_byte_(TM1637_CMD_CTRL + ((this->intensity_ & 0x7) | 0x08));
+  this->send_byte_(TM1637_6C_CMD_CTRL + ((this->intensity_ & 0x7) | 0x08));
   this->stop_();
 }
-bool TM1637Display::send_byte_(uint8_t b) {
+bool TM1637_6C_Display::send_byte_(uint8_t b) {
   uint8_t data = b;
   for (uint8_t i = 0; i < 8; i++) {
     // CLK low
@@ -267,7 +267,7 @@ bool TM1637Display::send_byte_(uint8_t b) {
   return ack;
 }
 
-uint8_t TM1637Display::read_byte_() {
+uint8_t TM1637_6C_Display::read_byte_() {
   uint8_t retval = 0;
   // Prepare DIO to read data
   this->dio_pin_->pin_mode(gpio::FLAG_INPUT);
@@ -297,16 +297,16 @@ uint8_t TM1637Display::read_byte_() {
   return retval;
 }
 
-uint8_t TM1637Display::print(uint8_t start_pos, const char *str) {
+uint8_t TM1637_6C_Display::print(uint8_t start_pos, const char *str) {
   // ESP_LOGV(TAG, "Print at %d: %s", start_pos, str);
   uint8_t pos = start_pos;
   bool use_dot = false;
   for (; *str != '\0'; str++) {
-    uint8_t data = TM1637_UNKNOWN_CHAR;
+    uint8_t data = TM1637_6C_UNKNOWN_CHAR;
     if (*str >= ' ' && *str <= '~')
-      data = progmem_read_byte(&TM1637_ASCII_TO_RAW[*str - ' ']);
+      data = progmem_read_byte(&TM1637_6C_ASCII_TO_RAW[*str - ' ']);
 
-    if (data == TM1637_UNKNOWN_CHAR) {
+    if (data == TM1637_6C_UNKNOWN_CHAR) {
       ESP_LOGW(TAG, "Encountered character '%c' with no TM1637 representation while translating string!", *str);
     }
     // Remap segments, for compatibility with MAX7219 segment definition which is
@@ -342,13 +342,26 @@ uint8_t TM1637Display::print(uint8_t start_pos, const char *str) {
         ESP_LOGE(TAG, "String is too long for the display!");
         break;
       }
-      this->buffer_[pos++] = data;
+      //order for the 6 character display:  2 1 0 5 4 3
+      if (pos = 0) {
+        this->buffer_[2] = data;
+      } else if (pos = 1) {
+        this->buffer_[1] = data;
+      } else if (pos = 2) {
+        this->buffer_[0] = data;
+      } else if (pos = 3) {
+        this->buffer_[5] = data;
+      } else if (pos = 4) {
+        this->buffer_[4] = data;
+      } else if (pos = 5) {
+        this->buffer_[3] = data;
+      }
     }
   }
   return pos - start_pos;
 }
-uint8_t TM1637Display::print(const char *str) { return this->print(0, str); }
-uint8_t TM1637Display::printf(uint8_t pos, const char *format, ...) {
+uint8_t TM1637_6C_Display::print(const char *str) { return this->print(0, str); }
+uint8_t TM1637_6C_Display::printf(uint8_t pos, const char *format, ...) {
   va_list arg;
   va_start(arg, format);
   char buffer[64];
@@ -358,7 +371,7 @@ uint8_t TM1637Display::printf(uint8_t pos, const char *format, ...) {
     return this->print(pos, buffer);
   return 0;
 }
-uint8_t TM1637Display::printf(const char *format, ...) {
+uint8_t TM1637_6C_Display::printf(const char *format, ...) {
   va_list arg;
   va_start(arg, format);
   char buffer[64];
@@ -369,14 +382,14 @@ uint8_t TM1637Display::printf(const char *format, ...) {
   return 0;
 }
 
-uint8_t TM1637Display::strftime(uint8_t pos, const char *format, ESPTime time) {
+uint8_t TM1637_6C_Display::strftime(uint8_t pos, const char *format, ESPTime time) {
   char buffer[64];
   size_t ret = time.strftime(buffer, sizeof(buffer), format);
   if (ret > 0)
     return this->print(pos, buffer);
   return 0;
 }
-uint8_t TM1637Display::strftime(const char *format, ESPTime time) { return this->strftime(0, format, time); }
+uint8_t TM1637_6C_Display::strftime(const char *format, ESPTime time) { return this->strftime(0, format, time); }
 
 }  // namespace tm1637
 }  // namespace esphome
