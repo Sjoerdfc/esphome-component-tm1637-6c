@@ -356,6 +356,7 @@ uint8_t TM1637_6C_Display::print(uint8_t start_pos, const char *str) {
       } else if (pos == 5) {
         this->buffer_[3] = data;
       }
+      pos++;
     }
   }
   return pos - start_pos;
